@@ -14,7 +14,7 @@ public class App {
         System.out.println("Private key:");
         System.out.println(elgamal.privateKey.p);
         System.out.println(elgamal.privateKey.g);
-        System.out.println(elgamal.privateKey.x);
+        System.out.println(elgamal.privateKey.x + "\n");
 
         String cipher = elgamal.encrypt(text);
         String decrypt = elgamal.decrypt(cipher);

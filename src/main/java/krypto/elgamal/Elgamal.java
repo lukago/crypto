@@ -7,7 +7,10 @@ import java.util.Random;
 
 public class Elgamal {
 
-    static final Random rnd = new Random();
+    static final Random RND = new Random();
+    static final BigInteger ZERO = BigInteger.ZERO;
+    static final BigInteger ONE = BigInteger.ONE;
+    static final BigInteger TWO = BigInteger.valueOf(2);
 
     PrivateKey privateKey;
     PublicKey publicKey;
@@ -17,26 +20,36 @@ public class Elgamal {
     }
 
     private BigInteger randBigInt(BigInteger min, BigInteger max) {
-        return new BigInteger(Math.abs(rnd.nextInt() % max.bitLength() + 1), rnd).mod(max).add(min);
+        return new BigInteger(Math.abs(RND.nextInt() % max.bitLength() + 1), RND).mod(max).add(min);
     }
 
     private BigInteger findPrimitiveRoot(BigInteger p) {
-        if (p.equals(BigInteger.valueOf(2))) {
-            return BigInteger.ONE;
+        if (p.equals(TWO)) {
+            return ONE;
         }
 
-        BigInteger p1 = BigInteger.valueOf(2);
-        BigInteger p2 = p.subtract(BigInteger.ONE).divide(p1);
+        BigInteger p1 = TWO;
+        BigInteger p2 = p.subtract(ONE).divide(p1);
 
         while (true) {
-            BigInteger g = randBigInt(BigInteger.valueOf(2), p.subtract(BigInteger.ONE));
+            BigInteger g = randBigInt(TWO, p.subtract(ONE));
 
-            if (!g.modPow(p.subtract(BigInteger.ONE).divide(p1), p).equals(BigInteger.ONE)) {
-                if (!g.modPow(p.subtract(BigInteger.ONE).divide(p2), p).equals(BigInteger.ONE)) {
+            if (!g.modPow(p.subtract(ONE).divide(p1), p).equals(ONE)) {
+                if (!g.modPow(p.subtract(ONE).divide(p2), p).equals(ONE)) {
                     return g;
                 }
             }
         }
+    }
+
+    public void generateKeys(int bits) {
+        BigInteger p = BigInteger.probablePrime(bits, RND);
+        BigInteger g = findPrimitiveRoot(p).modPow(TWO, p);
+        BigInteger x = randBigInt(ONE, p.subtract(ONE).divide(TWO));
+        BigInteger h = g.modPow(x, p);
+
+        publicKey = new PublicKey(p, g, h, bits);
+        privateKey = new PrivateKey(p, g, x, bits);
     }
 
     public List<BigInteger> encode(String plainText, int bits) {
@@ -48,10 +61,10 @@ public class Elgamal {
         for (int i = 0; i < bytes.length; i++) {
             if (i % k == 0) {
                 j += k;
-                z.add(BigInteger.ZERO);
+                z.add(ZERO);
             }
 
-            BigInteger mul = BigInteger.valueOf(2).pow(8 * (i % k));
+            BigInteger mul = TWO.pow(8 * (i % k));
             BigInteger add = BigInteger.valueOf(bytes[i]).multiply(mul);
             z.set(j / k, z.get(j / k).add(add));
         }
@@ -68,13 +81,13 @@ public class Elgamal {
                 BigInteger temp = num;
 
                 for (int j = i + 1; j < k; j++) {
-                    temp = temp.mod(BigInteger.valueOf(2).pow(8 * j));
+                    temp = temp.mod(TWO.pow(8 * j));
                 }
 
-                BigInteger letter = temp.divide(BigInteger.valueOf(2).pow(8 * i));
+                BigInteger letter = temp.divide(TWO.pow(8 * i));
                 bytes.add(letter.byteValueExact());
 
-                letter = letter.multiply(BigInteger.valueOf(2).pow(8 * i));
+                letter = letter.multiply(TWO.pow(8 * i));
                 num = num.subtract(letter);
             }
         }
@@ -87,22 +100,12 @@ public class Elgamal {
         return new String(byteArr);
     }
 
-    public void generateKeys(int bits) {
-        BigInteger p = BigInteger.probablePrime(bits, rnd);
-        BigInteger g = findPrimitiveRoot(p).modPow(BigInteger.valueOf(2), p);
-        BigInteger x = randBigInt(BigInteger.ONE, p.subtract(BigInteger.ONE).divide(BigInteger.valueOf(2)));
-        BigInteger h = g.modPow(x, p);
-
-        publicKey = new PublicKey(p, g, h, bits);
-        privateKey = new PrivateKey(p, g, x, bits);
-    }
-
     public String encrypt(String plainText) {
         List<BigInteger> z = encode(plainText, publicKey.iNumBits);
 
         StringBuilder encryptedStr = new StringBuilder();
         for (BigInteger i : z) {
-            BigInteger y = randBigInt(BigInteger.ZERO, publicKey.p);
+            BigInteger y = randBigInt(ZERO, publicKey.p);
             BigInteger c = publicKey.g.modPow(y, publicKey.p);
             BigInteger hmod = publicKey.h.modPow(y, publicKey.p);
             BigInteger d = i.multiply(hmod).mod(publicKey.p);
@@ -120,7 +123,7 @@ public class Elgamal {
             BigInteger c = new BigInteger(cipherArray[i]);
             BigInteger d = new BigInteger(cipherArray[i + 1]);
             BigInteger s = c.modPow(privateKey.x, privateKey.p);
-            BigInteger smod = s.modPow(privateKey.p.subtract(BigInteger.valueOf(2)), privateKey.p);
+            BigInteger smod = s.modPow(privateKey.p.subtract(TWO), privateKey.p);
             BigInteger plain = d.multiply(smod).mod(privateKey.p);
             encodedText.add(plain);
         }
