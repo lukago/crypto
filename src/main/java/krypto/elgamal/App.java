@@ -4,7 +4,7 @@ public class App {
 
     public static void main(String[] args) {
         String text = "Przykladowy ukryty tekst...abc def ghf ijk @!";
-        Elgamal elgamal = new Elgamal(256);
+        Elgamal elgamal = new Elgamal(8, 100);
 
         System.out.println("Public key:");
         System.out.println(elgamal.publicKey.p);

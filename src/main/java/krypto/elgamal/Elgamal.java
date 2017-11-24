@@ -15,12 +15,81 @@ public class Elgamal {
     PrivateKey privateKey;
     PublicKey publicKey;
 
-    public Elgamal(int bits) {
-        generateKeys(bits);
+    public Elgamal(int bits, int confidence) {
+        generateKeys(bits, confidence);
     }
 
-    private BigInteger randBigInt(BigInteger min, BigInteger max) {
-        return new BigInteger(Math.abs(RND.nextInt() % max.bitLength() + 1), RND).mod(max).add(min);
+    public BigInteger randBigInt(BigInteger min, BigInteger max) {
+        int len = Math.abs(RND.nextInt() % max.bitLength() + 1);
+        return new BigInteger(len, RND).mod(max).add(min);
+    }
+
+    public int jacobi(BigInteger a, BigInteger n) {
+        BigInteger three = BigInteger.valueOf(3);
+        BigInteger four = BigInteger.valueOf(4);
+        BigInteger eight = BigInteger.valueOf(8);
+
+        if (a.equals(ZERO))
+            return n.equals(ONE) ? 1 : 0;
+
+        if (a.equals(BigInteger.valueOf(-1)))
+            return n.mod(TWO).equals(ZERO) ? 1 : -1;
+
+        if (a.equals(ONE))
+            return 1;
+
+        if (a.equals(TWO)) {
+            if (n.mod(eight).equals(ONE) || n.mod(eight).equals(BigInteger.valueOf(7)))
+                return 1;
+            if (n.mod(eight).equals(three) || n.mod(eight).equals(BigInteger.valueOf(5)))
+                return -1;
+        }
+
+        if (a.compareTo(n) >= 0)
+            return jacobi(a.mod(n), n);
+
+        if (a.mod(TWO).equals(ZERO))
+            return jacobi(TWO, n) * jacobi(a.divide(TWO), n);
+
+        if (a.mod(four).equals(three) && n.mod(four).equals(three))
+            return -1 * jacobi(n, a);
+
+        return jacobi(n, a);
+    }
+
+    boolean SolovayStrassen(BigInteger num, int confidence) {
+        for (int i = 0; i < confidence; i++) {
+            BigInteger a = randBigInt(ONE, num.subtract(ONE));
+
+            if (a.gcd(num).compareTo(ONE) > 0)
+                return false;
+
+            BigInteger left = a.modPow(num.subtract(ONE).divide(TWO), num);
+            BigInteger jacobi = BigInteger.valueOf(jacobi(a, num));
+            if (!jacobi.mod(num).equals(left))
+                return false;
+        }
+
+        return true;
+    }
+
+    public BigInteger findPrime(int bits, int confidence) {
+        while (true) {
+            BigInteger p = randBigInt(TWO.pow(bits - 2), TWO.pow(bits - 1));
+
+            while (p.mod(TWO).equals(ZERO))
+                p = randBigInt(TWO.pow(bits - 2), TWO.pow(bits - 1));
+
+            while (!SolovayStrassen(p, confidence)) {
+                p = randBigInt(TWO.pow(bits - 2), TWO.pow(bits - 1));
+                while (p.mod(TWO).equals(ZERO))
+                    p = randBigInt(TWO.pow(bits - 2), TWO.pow(bits - 1));
+            }
+
+            p = p.multiply(TWO).add(ONE);
+            if (SolovayStrassen(p, confidence))
+                return p;
+        }
     }
 
     private BigInteger findPrimitiveRoot(BigInteger p) {
@@ -42,8 +111,8 @@ public class Elgamal {
         }
     }
 
-    public void generateKeys(int bits) {
-        BigInteger p = BigInteger.probablePrime(bits, RND);
+    public void generateKeys(int bits, int confidence) {
+        BigInteger p = findPrime(bits, confidence);
         BigInteger g = findPrimitiveRoot(p).modPow(TWO, p);
         BigInteger x = randBigInt(ONE, p.subtract(ONE).divide(TWO));
         BigInteger h = g.modPow(x, p);
