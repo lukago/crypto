@@ -111,20 +111,26 @@ public class Elgamal {
 
         privKey.p = pubKey.p;
         privKey.g = pubKey.g;
-        pubKey.bits = bits;
-        privKey.bits = bits;
+        pubKey.bits = pubKey.p.bitLength();
+        privKey.bits = pubKey.bits;
     }
 
     public static List<BigInteger> encode(String plainText, int bits) {
         int charBits = 8;
-        int packets = bits / charBits;
+        int packets = bits / (charBits + 1);
         byte[] bytes = plainText.getBytes();
         List<BigInteger> z = new ArrayList<>();
 
+        int index = -1;
         for (int i = 0; i < bytes.length; i++) {
+            if (i % packets == 0) {
+                index++;
+                z.add(ZERO);
+            }
+
             BigInteger mul = TWO.pow(charBits * (i % packets));
             BigInteger add = BigInteger.valueOf(bytes[i] & 0xFF).multiply(mul);
-            z.add(add);
+            z.set(index, z.get(index).add(add));
         }
 
         return z;
@@ -132,7 +138,7 @@ public class Elgamal {
 
     public static String decode(List<BigInteger> encodedText, int bits) {
         int charBits = 8;
-        int packets = bits / charBits;
+        int packets = bits / (charBits + 1);
         List<Byte> bytes = new ArrayList<>();
 
         for (BigInteger num : encodedText) {
@@ -144,7 +150,9 @@ public class Elgamal {
 
                 BigInteger letter = temp.divide(TWO.pow(charBits * j));
                 bytes.add(letter.byteValue());
+                num = num.subtract(letter.multiply(TWO.pow(charBits * j)));
             }
+
         }
 
         bytes = bytes.stream().filter(b -> b != 0).collect(Collectors.toList());
@@ -181,8 +189,8 @@ public class Elgamal {
             BigInteger c = new BigInteger(cipherArray[i], radix);
             BigInteger d = new BigInteger(cipherArray[i + 1], radix);
             BigInteger s = c.modPow(key.x, key.p);
-            BigInteger smod = s.modPow(key.p.subtract(TWO), key.p);
-            BigInteger plain = d.multiply(smod).mod(key.p);
+            BigInteger srev = s.modPow(key.p.subtract(TWO), key.p);
+            BigInteger plain = d.multiply(srev).mod(key.p);
             encodedText.add(plain);
         }
 
