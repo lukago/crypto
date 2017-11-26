@@ -14,7 +14,7 @@ public class Elgamal {
     private static final BigInteger TWO = BigInteger.valueOf(2);
 
     public static BigInteger randBigInt(BigInteger min, BigInteger max) {
-        int len = Math.abs(RND.nextInt() % max.bitLength() + 1);
+        int len = max.bitLength();
         return new BigInteger(len, RND).mod(max.subtract(min).add(ONE)).add(min);
     }
 
@@ -95,11 +95,11 @@ public class Elgamal {
         BigInteger p2 = p.subtract(ONE).divide(TWO);
 
         while (true) {
-            BigInteger g = randBigInt(TWO, p.subtract(ONE));
+            BigInteger root = randBigInt(TWO, p.subtract(ONE));
 
-            if (!g.modPow(p.subtract(ONE).divide(TWO), p).equals(ONE))
-                if (!g.modPow(p.subtract(ONE).divide(p2), p).equals(ONE))
-                    return g;
+            if (!root.modPow(p.subtract(ONE).divide(TWO), p).equals(ONE))
+                if (!root.modPow(p.subtract(ONE).divide(p2), p).equals(ONE))
+                    return root;
         }
     }
 
@@ -119,21 +119,21 @@ public class Elgamal {
         int charBits = 8;
         int packets = bits / (charBits + 1);
         byte[] bytes = plainText.getBytes();
-        List<BigInteger> z = new ArrayList<>();
+        List<BigInteger> encoded = new ArrayList<>();
 
         int index = -1;
         for (int i = 0; i < bytes.length; i++) {
             if (i % packets == 0) {
                 index++;
-                z.add(ZERO);
+                encoded.add(ZERO);
             }
 
             BigInteger mul = TWO.pow(charBits * (i % packets));
             BigInteger add = BigInteger.valueOf(bytes[i] & 0xFF).multiply(mul);
-            z.set(index, z.get(index).add(add));
+            encoded.set(index, encoded.get(index).add(add));
         }
 
-        return z;
+        return encoded;
     }
 
     public static String decode(List<BigInteger> encodedText, int bits) {
@@ -172,8 +172,8 @@ public class Elgamal {
         for (BigInteger i : z) {
             BigInteger y = randBigInt(ONE, key.p);
             BigInteger c = key.g.modPow(y, key.p);
-            BigInteger hmod = key.h.modPow(y, key.p);
-            BigInteger d = i.multiply(hmod).mod(key.p);
+            BigInteger s = key.h.modPow(y, key.p);
+            BigInteger d = i.multiply(s).mod(key.p);
             encryptedStr.append(c.toString(radix)).append(" ")
                     .append(d.toString(radix)).append(" ");
         }
