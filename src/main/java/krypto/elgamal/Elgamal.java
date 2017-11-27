@@ -14,7 +14,7 @@ public class Elgamal {
     private static final BigInteger TWO = BigInteger.valueOf(2);
 
     public static BigInteger randBigInt(BigInteger min, BigInteger max) {
-        int len = max.bitLength();
+        int len = Math.abs(RND.nextInt()) % max.bitLength() + 1;
         return new BigInteger(len, RND).mod(max.subtract(min).add(ONE)).add(min);
     }
 
@@ -54,7 +54,7 @@ public class Elgamal {
         return jacobi(n, a);
     }
 
-    public static boolean SolovayStrassen(BigInteger num, int confidence) {
+    public static boolean solovayStrassen(BigInteger num, int confidence) {
         for (int i = 0; i < confidence; i++) {
             BigInteger a = randBigInt(ONE, num.subtract(ONE));
 
@@ -77,13 +77,13 @@ public class Elgamal {
             do candidate = randBigInt(TWO.pow(bits - 2), TWO.pow(bits - 1));
             while (candidate.mod(TWO).equals(ZERO));
 
-            while (!SolovayStrassen(candidate, confidence)) {
+            while (!solovayStrassen(candidate, confidence)) {
                 do candidate = randBigInt(TWO.pow(bits - 2), TWO.pow(bits - 1));
                 while (candidate.mod(TWO).equals(ZERO));
             }
 
             candidate = candidate.multiply(TWO).add(ONE);
-            if (SolovayStrassen(candidate, confidence))
+            if (solovayStrassen(candidate, confidence))
                 return candidate;
         }
     }

@@ -40,7 +40,9 @@ public class App {
             int radix = Integer.parseInt(args[3]);
             String decmsgPath = args[4];
 
-            String msg = Elgamal.decrypt(readMsg(cipherPath), radix, privKeyFromArr(readFile(privKeyPath), radix));
+            Elgamal.PrivateKey privateKey = privKeyFromArr(readFile(privKeyPath), radix);
+            String msg = Elgamal.decrypt(readMsg(cipherPath), radix, privateKey);
+
             saveMsgToFile(msg, decmsgPath);
 
             System.out.println("Decrypted.");
