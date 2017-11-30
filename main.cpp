@@ -137,7 +137,7 @@ string decode(const vector<BigInt> &encodedText, int bits)
     return string(bytesF.begin(), bytesF.end());
 }
 
-string encrypt(const string &plainText, PublicKey key)
+string encrypt(const string &plainText, PublicKey key, int radix)
 {
     vector<BigInt> z = encode(plainText, key.bits);
 
@@ -148,13 +148,13 @@ string encrypt(const string &plainText, PublicKey key)
         c = modPow(key.g, y, key.p);
         s = modPow(key.h, y, key.p);
         d = (i * s) % key.p;
-        encryptedStr.append(c.toString() + " " + d.toString() + " ");
+        encryptedStr.append(c.toString(radix) + " " + d.toString(radix) + " ");
     }
 
     return encryptedStr;
 }
 
-string decrypt(const string &cipher, PrivateKey key)
+string decrypt(const string &cipher, PrivateKey key, int radix)
 {
     vector<BigInt> encodedText;
     BigInt c, d, s, srev, plain;
@@ -162,8 +162,8 @@ string decrypt(const string &cipher, PrivateKey key)
     vector<string> cipherVec{istream_iterator<string>{ss}, istream_iterator<string>{}};
 
     for (int i = 0; i < cipherVec.size(); i += 2) {
-        c = BigInt(cipherVec[i]);
-        d = BigInt(cipherVec[i + 1]);
+        c = BigInt(cipherVec[i], radix);
+        d = BigInt(cipherVec[i + 1], radix);
         s = modPow(c, key.x, key.p);
         srev = modPow(s, key.p - 2, key.p);
         plain = (d * srev) % key.p;
@@ -178,9 +178,9 @@ void saveToFile(const vector<string> &data, const string &fileName);
 void saveMsgToFile(const string &msg, const string &fileName);
 vector<string> readFile(const string &fileName);
 string readMsg(const string &fileName);
-vector<string> privKeyToVec(const PrivateKey &key);
-vector<string> pubKeyToVec(const PublicKey &key);
-PrivateKey privKeyFromVec(const vector<string> &data);
+vector<string> privKeyToVec(const PrivateKey &key, int radix);
+vector<string> pubKeyToVec(const PublicKey &key, int radix);
+PrivateKey privKeyFromVec(const vector<string> &data, int radix);
 
 // ====================================================================
 // =============================== MAIN ===============================
@@ -193,15 +193,16 @@ int main(int argc, char **argv)
         string msgPath = argv[2];
         int bits = stoi(argv[3]);
         int conf = stoi(argv[4]);
-        string pubKeyPath = argv[5];
-        string privKeyPath = argv[6];
-        string cipherPath = argv[7];
+        int radix = stoi(argv[5]);
+        string pubKeyPath = argv[6];
+        string privKeyPath = argv[7];
+        string cipherPath = argv[8];
 
         auto keys = generateKeys(bits, conf);
-        string cipher = encrypt(readMsg(msgPath), keys.second);
+        string cipher = encrypt(readMsg(msgPath), keys.second, radix);
 
-        saveToFile(pubKeyToVec(keys.second), pubKeyPath);
-        saveToFile(privKeyToVec(keys.first), privKeyPath);
+        saveToFile(pubKeyToVec(keys.second, radix), pubKeyPath);
+        saveToFile(privKeyToVec(keys.first, radix), privKeyPath);
         saveMsgToFile(cipher, cipherPath);
 
         cout << "Encrypted.";
@@ -211,10 +212,11 @@ int main(int argc, char **argv)
     if (argc > 0 && strcmp(argv[1], "decr") == 0) {
         string cipherPath = argv[2];
         string privKeyPath = argv[3];
-        string decmsgPath = argv[4];
+        int radix = stoi(argv[4]);
+        string decmsgPath = argv[5];
 
-        PrivateKey privateKey = privKeyFromVec(readFile(privKeyPath));
-        string msg = decrypt(readMsg(cipherPath), privateKey);
+        PrivateKey privateKey = privKeyFromVec(readFile(privKeyPath), radix);
+        string msg = decrypt(readMsg(cipherPath), privateKey, radix);
 
         saveMsgToFile(msg, decmsgPath);
 
@@ -223,9 +225,9 @@ int main(int argc, char **argv)
     }
 
     string usage = "Usage:\n"
-            "encr {path to msg} {prime bits num} {prime test confidence} "
+            "encr {path to msg} {prime bits num} {prime test confidence} {radix} "
             "{path to save pub key} {path to save priv key} {path to save cipher}\n"
-            "decr {path to cipher} {priv key path} {path to save decrypted message}";
+            "decr {path to cipher} {priv key path} {radix} {path to save decrypted message}";
 
     cout << usage;
     return 0;
@@ -266,32 +268,32 @@ string readMsg(const string &fileName)
     return msg;
 }
 
-vector<string> privKeyToVec(const PrivateKey &key)
+vector<string> privKeyToVec(const PrivateKey &key, int radix)
 {
     return vector<string>{
-            key.p.toString(),
-            key.g.toString(),
-            key.x.toString(),
+            key.p.toString(radix),
+            key.g.toString(radix),
+            key.x.toString(radix),
             to_string(key.bits)
     };
 }
 
-vector<string> pubKeyToVec(const PublicKey &key)
+vector<string> pubKeyToVec(const PublicKey &key, int radix)
 {
     return vector<string>{
-            key.p.toString(),
-            key.g.toString(),
-            key.h.toString(),
+            key.p.toString(radix),
+            key.g.toString(radix),
+            key.h.toString(radix),
             to_string(key.bits)
     };
 }
 
-PrivateKey privKeyFromVec(const vector<string> &data)
+PrivateKey privKeyFromVec(const vector<string> &data, int radix)
 {
     return PrivateKey{
-            BigInt(data[0]),
-            BigInt(data[1]),
-            BigInt(data[2]),
+            BigInt(data[0], radix),
+            BigInt(data[1], radix),
+            BigInt(data[2], radix),
             stoi(data[3])
     };
 }

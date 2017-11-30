@@ -15,9 +15,12 @@ BigInt::BigInt(long long v)
     *this = v;
 }
 
-BigInt::BigInt(const std::string &s)
+BigInt::BigInt(const std::string &s, int radix)
 {
-    read(s);
+    if (radix == 10)
+        read(s);
+    else
+        *this = parseBase(s, radix);
 }
 
 BigInt::BigInt(const std::vector<int> &mag, int sign)
@@ -96,8 +99,8 @@ void BigInt::operator-=(const BigInt &v)
 
 BigInt BigInt::operator*(const BigInt &v) const
 {
-    std::vector<int> a6 = convert_base(this->mag, base_digits, 6);
-    std::vector<int> b6 = convert_base(v.mag, base_digits, 6);
+    std::vector<int> a6 = convertBase(this->mag, base_digits, 6);
+    std::vector<int> b6 = convertBase(v.mag, base_digits, 6);
     std::vector<long long> a(a6.begin(), a6.end());
     std::vector<long long> b(b6.begin(), b6.end());
 
@@ -118,7 +121,7 @@ BigInt BigInt::operator*(const BigInt &v) const
         carry = (int) (cur / 1000000);
     }
 
-    res.mag = convert_base(res.mag, 6, base_digits);
+    res.mag = convertBase(res.mag, 6, base_digits);
     res.trim();
     return res;
 }
@@ -292,8 +295,11 @@ long long BigInt::longValue() const
     return res * sign;
 }
 
-std::string BigInt::toString() const
+std::string BigInt::toString(int radix) const
 {
+    if (radix != 10)
+        return toStringBase(*this, radix);
+
     std::ostringstream stream;
 
     if (sign == -1)
@@ -374,12 +380,12 @@ std::pair<BigInt, BigInt> BigInt::divmod(const BigInt &a1, const BigInt &b1)
     return std::make_pair(q, r / norm);
 }
 
-std::vector<int> BigInt::convert_base(const std::vector<int> &a, int old_digits, int new_digits)
+std::vector<int> BigInt::convertBase(const std::vector<int> &a, int oldDigits, int newDigits)
 {
     std::vector<int> res;
     long long cur = 0;
     int cur_digits = 0;
-    std::vector<long long> p((unsigned long) (std::max(old_digits, new_digits) + 1));
+    std::vector<long long> p((unsigned long) (std::max(oldDigits, newDigits) + 1));
 
     p[0] = 1;
     for (int i = 1; i < (int) p.size(); i++)
@@ -387,11 +393,11 @@ std::vector<int> BigInt::convert_base(const std::vector<int> &a, int old_digits,
 
     for (int i : a) {
         cur += i * p[cur_digits];
-        cur_digits += old_digits;
-        while (cur_digits >= new_digits) {
-            res.push_back(int(cur % p[new_digits]));
-            cur /= p[new_digits];
-            cur_digits -= new_digits;
+        cur_digits += oldDigits;
+        while (cur_digits >= newDigits) {
+            res.push_back(int(cur % p[newDigits]));
+            cur /= p[newDigits];
+            cur_digits -= newDigits;
         }
     }
 
@@ -442,6 +448,42 @@ BigInt::karatsubaMultiply(const std::vector<long long> &a, const std::vector<lon
         res[i + n] += a2b2[i];
 
     return res;
+}
+
+BigInt BigInt::parseBase(const std::string &val, int radix)
+{
+    int len = (int) val.size();
+    BigInt base = 1;
+    BigInt res = 0;
+
+    for (int i = len - 1; i >= 0; i--) {
+        if (val[i] >= '0' && val[i] <= '9') {
+            res += base * (val[i] - '0');
+            base = base * radix;
+        } else {
+            // a - 87 = 10, A - 55 = 10
+            res += base * (val[i] - 87);
+            base = base * radix;
+        }
+    }
+
+    return res;
+}
+
+std::string BigInt::toStringBase(BigInt val, int radix)
+{
+    static std::string base36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    base36 = "0123456789abcdefghijklmnopqrstuvwxyz";
+    std::string result;
+
+    if (val.sign == -1)
+        result.push_back('-');
+
+    do {
+        result = base36[val % radix] + result;
+        val /= radix;
+    } while (val >= 1);
+    return result;
 }
 
 BigInt modPow(BigInt base, BigInt exp, const BigInt &mod)

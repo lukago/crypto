@@ -10,7 +10,7 @@ public:
 
     BigInt();
     BigInt(long long v);
-    BigInt(const std::string &s);
+    BigInt(const std::string &s, int radix = 10);
     BigInt(const std::vector<int> &mag, int sign);
 
     BigInt &operator=(const BigInt &v);
@@ -55,7 +55,7 @@ public:
     BigInt abs() const;
     bool isZero() const;
     long long longValue() const;
-    std::string toString() const;
+    std::string toString(int radix = 10) const;
     int len() const;
 
     friend BigInt modPow(BigInt base, BigInt exp, const BigInt &mod);
@@ -74,9 +74,11 @@ private:
     void trim();
     void read(const std::string &s);
     static std::pair<BigInt, BigInt> divmod(const BigInt &a1, const BigInt &b1);
-    static std::vector<int> convert_base(const std::vector<int> &a, int old_digits, int new_digits);
+    static std::vector<int> convertBase(const std::vector<int> &a, int oldDigits, int newDigits);
     static std::vector<long long> karatsubaMultiply(const std::vector<long long> &a,
                                                     const std::vector<long long> &b);
+    static BigInt parseBase(const std::string &val, int radix);
+    static std::string toStringBase(BigInt val, int radix);
 };
 
 BigInt modPow(BigInt base, BigInt exp, const BigInt &mod);
