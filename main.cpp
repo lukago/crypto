@@ -3,6 +3,8 @@
 #include "BigInt.h"
 #include "primes.h"
 
+using namespace std;
+
 struct PrivateKey
 {
     BigInt p;
@@ -39,7 +41,7 @@ bool millerRabin(const BigInt &n, int k)
     }
 
     for (int i = 0; i < k; i++) {
-        BigInt a = BigInt::xrand(2, n - 1);
+        BigInt a = xrand(2, n - 1);
         BigInt x = modPow(a, d, n);
 
         if (x == 1 || x == n - 1) continue;
@@ -60,11 +62,11 @@ BigInt findPrimie(int confidence, const BigInt &min, const BigInt &max)
 {
     BigInt candidate;
 
-    do candidate = BigInt::xrand(min, max);
+    do candidate = xrand(min, max);
     while (trialDiv(candidate));
 
     while (!millerRabin(candidate, confidence)) {
-        do candidate = BigInt::xrand(min, max);
+        do candidate = xrand(min, max);
         while (trialDiv(candidate));
     }
 
@@ -73,9 +75,9 @@ BigInt findPrimie(int confidence, const BigInt &min, const BigInt &max)
 
 pair<PrivateKey, PublicKey> generateKeys(int bits, int confidence)
 {
-    BigInt p = findPrimie(confidence, BigInt::fastPow(2, bits - 1), BigInt::fastPow(2, bits));
-    BigInt g = BigInt::xrand(BigInt::fastPow(2, bits - 1), p);
-    BigInt x = BigInt::xrand(1, p - 1);
+    BigInt p = findPrimie(confidence, fastPow(2, bits - 1), fastPow(2, bits));
+    BigInt g = xrand(fastPow(2, bits - 1), p);
+    BigInt x = xrand(1, p - 1);
     BigInt h = modPow(g, x, p);
 
     PublicKey pub{p, g, h, bits};
@@ -87,8 +89,7 @@ int main()
 {
     srand(time(0));
 
-    auto res = generateKeys(512, 3);
-
+    auto res = generateKeys(1024, 5);
 
     cout << res.first.p << endl;
     cout << res.first.g << endl;
