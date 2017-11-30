@@ -11,7 +11,6 @@ public:
     BigInt();
     BigInt(long long v);
     BigInt(const std::string &s, int radix = 10);
-    BigInt(const std::vector<int> &mag, int sign);
 
     BigInt &operator=(const BigInt &v);
     BigInt &operator=(long long v);

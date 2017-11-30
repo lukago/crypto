@@ -23,12 +23,6 @@ BigInt::BigInt(const std::string &s, int radix)
         *this = parseBase(s, radix);
 }
 
-BigInt::BigInt(const std::vector<int> &mag, int sign)
-{
-    this->sign = sign;
-    this->mag = mag;
-}
-
 BigInt &BigInt::operator=(const BigInt &v)
 {
     sign = v.sign;
@@ -316,8 +310,7 @@ int BigInt::len() const
 {
     int sz = (int) mag.size();
     int len = (int) log10(mag[sz - 1]) + 1;
-    for (int i = sz - 2; i >= 0; --i)
-        len += base_digits;
+    if (sz > 1) len += base_digits * (sz - 1);
 
     return len;
 }
@@ -472,8 +465,7 @@ BigInt BigInt::parseBase(const std::string &val, int radix)
 
 std::string BigInt::toStringBase(BigInt val, int radix)
 {
-    static std::string base36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    base36 = "0123456789abcdefghijklmnopqrstuvwxyz";
+    static std::string base36 = "0123456789abcdefghijklmnopqrstuvwxyz";
     std::string result;
 
     if (val.sign == -1)
@@ -544,20 +536,20 @@ BigInt xrand(const BigInt &min, const BigInt &max)
     int a = max.len() - b + 1;
     int length;
 
-    std::string nums = "0123456789";
-    std::string nums2 = "123456789";
-    std::string nums3 = "13579";
-    std::string s;
+    std::string nums0 = "123456789";
+    std::string nums1 = "0123456789";
+    std::string nums2 = "13579";
+    std::string strval;
     BigInt res;
 
     do {
-        s = "";
+        strval = "";
         length = rand() % (a) + b;
-        s.push_back(nums2[rand() % 9]);
+        strval.push_back(nums0[rand() % 9]);
         for (int i = 1; i < length - 1; ++i)
-            s.push_back(nums[rand() % 10]);
-        s.push_back(nums3[rand() % 5]);
-        res.read(s);
+            strval.push_back(nums1[rand() % 10]);
+        strval.push_back(nums2[rand() % 5]);
+        res.read(strval);
     } while (res >= max || res <= min);
 
     return res;
