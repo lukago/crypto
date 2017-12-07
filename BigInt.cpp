@@ -502,7 +502,6 @@ BigInt modPow(BigInt base, BigInt exp, const BigInt &mod)
 
     if (base == 0) return 0;
     if (exp == 0) return 1;
-    if (exp == 1) return base;
 
     BigInt result = 1;
     base = base % mod;

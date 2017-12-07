@@ -47,7 +47,7 @@ bool millerRabin(const BigInt &n, int k)
     }
 
     for (int i = 0; i < k; i++) {
-        BigInt a = xrand(2, n - 2);
+        BigInt a = xrand(2, n - 1);
         BigInt x = modPow(a, d, n);
 
         if (x == 1 || x == n - 1) continue;
@@ -66,7 +66,7 @@ bool millerRabin(const BigInt &n, int k)
     return true;
 }
 
-BigInt findPrimie(int confidence, const BigInt &min, const BigInt &max)
+BigInt findPrime(int confidence, const BigInt &min, const BigInt &max)
 {
     BigInt candidate;
 
@@ -83,7 +83,7 @@ BigInt findPrimie(int confidence, const BigInt &min, const BigInt &max)
 
 pair<PrivateKey, PublicKey> generateKeys(int bits, int confidence)
 {
-    BigInt p = findPrimie(confidence, fastPow(2, bits - 1), fastPow(2, bits));
+    BigInt p = findPrime(confidence, fastPow(2, bits - 1), fastPow(2, bits));
     BigInt g = xrand(fastPow(2, bits - 1), p);
     BigInt x = xrand(1, p - 1);
     BigInt h = modPow(g, x, p);
