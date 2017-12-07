@@ -232,7 +232,7 @@ int main(int argc, char **argv)
             "{path to save pub key} {path to save priv key} {path to save cipher}\n"
             "decr {path to cipher} {priv key path} {radix} {path to save decrypted message}";
 
-    cout << usage;*/
+    cout << usage;
     return 0;
 }
 
