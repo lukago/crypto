@@ -4,6 +4,7 @@
 #include <sstream>
 #include <fstream>
 #include <cstring>
+#include <chrono>
 
 #include "BigInt.h"
 #include "primes.h"
@@ -46,18 +47,20 @@ bool millerRabin(const BigInt &n, int k)
     }
 
     for (int i = 0; i < k; i++) {
-        BigInt a = xrand(2, n - 1);
+        BigInt a = xrand(2, n - 2);
         BigInt x = modPow(a, d, n);
 
         if (x == 1 || x == n - 1) continue;
 
-        for (int j = 0; j < r - 1; j++) {
+        int j;
+        for (j = 0; j < r - 1; j++) {
             x = modPow(x, 2, n);
             if (x == 1) return false;
             if (x == n - 1) break;
         }
 
-        return false;
+        if (j >= r - 1)
+            return false;
     }
 
     return true;
@@ -201,8 +204,8 @@ int main(int argc, char **argv)
         auto keys = generateKeys(bits, conf);
         string cipher = encrypt(readMsg(msgPath), keys.second, radix);
 
-        saveToFile(pubKeyToVec(keys.second, radix), pubKeyPath);
         saveToFile(privKeyToVec(keys.first, radix), privKeyPath);
+        saveToFile(pubKeyToVec(keys.second, radix), pubKeyPath);
         saveMsgToFile(cipher, cipherPath);
 
         cout << "Encrypted.";
@@ -229,7 +232,7 @@ int main(int argc, char **argv)
             "{path to save pub key} {path to save priv key} {path to save cipher}\n"
             "decr {path to cipher} {priv key path} {radix} {path to save decrypted message}";
 
-    cout << usage;
+    cout << usage;*/
     return 0;
 }
 

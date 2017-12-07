@@ -93,8 +93,11 @@ void BigInt::operator-=(const BigInt &v)
 
 BigInt BigInt::operator*(const BigInt &v) const
 {
-    std::vector<int> a6 = convertBase(this->mag, base_digits, 6);
-    std::vector<int> b6 = convertBase(v.mag, base_digits, 6);
+    if (mag.size() < 30)
+        return mulSimple(*this, v);
+
+    std::vector<int> a6 = convertBase(this->mag, baseDigits, 6);
+    std::vector<int> b6 = convertBase(v.mag, baseDigits, 6);
     std::vector<long long> a(a6.begin(), a6.end());
     std::vector<long long> b(b6.begin(), b6.end());
 
@@ -115,7 +118,7 @@ BigInt BigInt::operator*(const BigInt &v) const
         carry = (int) (cur / 1000000);
     }
 
-    res.mag = convertBase(res.mag, 6, base_digits);
+    res.mag = convertBase(res.mag, 6, baseDigits);
     res.trim();
     return res;
 }
@@ -301,7 +304,7 @@ std::string BigInt::toString(int radix) const
 
     stream << (mag.empty() ? 0 : mag.back());
     for (int i = (int) mag.size() - 2; i >= 0; --i)
-        stream << std::setw(base_digits) << std::setfill('0') << mag[i];
+        stream << std::setw(baseDigits) << std::setfill('0') << mag[i];
 
     return stream.str();
 }
@@ -310,7 +313,7 @@ int BigInt::len() const
 {
     int sz = (int) mag.size();
     int len = (int) log10(mag[sz - 1]) + 1;
-    if (sz > 1) len += base_digits * (sz - 1);
+    if (sz > 1) len += baseDigits * (sz - 1);
 
     return len;
 }
@@ -335,9 +338,9 @@ void BigInt::read(const std::string &s)
         ++pos;
     }
 
-    for (int i = (int) s.size() - 1; i >= pos; i -= base_digits) {
+    for (int i = (int) s.size() - 1; i >= pos; i -= baseDigits) {
         int x = 0;
-        for (int j = std::max(pos, i - base_digits + 1); j <= i; j++)
+        for (int j = std::max(pos, i - baseDigits + 1); j <= i; j++)
             x = x * 10 + s[j] - '0';
         mag.push_back(x);
     }
@@ -398,6 +401,20 @@ std::vector<int> BigInt::convertBase(const std::vector<int> &a, int oldDigits, i
     while (!res.empty() && !res.back())
         res.pop_back();
 
+    return res;
+}
+
+BigInt BigInt::mulSimple(const BigInt &a, const BigInt &b)
+{
+    BigInt res = 0, tmp;
+
+    for (int i = 0; i < b.mag.size(); i++) {
+        tmp = a * b.mag[i];
+        for (int j = i - 1; j >= 0; j--) tmp *= base;
+        res += tmp;
+    }
+
+    res.trim();
     return res;
 }
 
@@ -483,13 +500,15 @@ BigInt modPow(BigInt base, BigInt exp, const BigInt &mod)
     // Record start time
     auto start = std::chrono::high_resolution_clock::now();
 
+    if (base == 0) return 0;
+    if (exp == 0) return 1;
+    if (exp == 1) return base;
+
     BigInt result = 1;
     base = base % mod;
     while (exp > 0) {
-        if (exp.mag[0] & 1) {
-            result = (result * base);
-            result = result % mod;
-        }
+        if (exp.mag[0] & 1)
+            result = (result * base) % mod;
         exp /= 2;
         base = (base * base) % mod;
     }
@@ -511,11 +530,6 @@ BigInt gcd(BigInt a, BigInt b)
     }
 
     return a;
-}
-
-BigInt lcm(const BigInt &a, const BigInt &b)
-{
-    return a / gcd(a, b) * b;
 }
 
 BigInt fastPow(BigInt base, int exp)

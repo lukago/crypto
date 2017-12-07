@@ -59,13 +59,12 @@ public:
 
     friend BigInt modPow(BigInt base, BigInt exp, const BigInt &mod);
     friend BigInt gcd(BigInt a, BigInt b);
-    friend BigInt lcm(const BigInt &a, const BigInt &b);
     friend BigInt xrand(const BigInt &min, const BigInt &max);
     friend BigInt fastPow(BigInt base, int exp);
 
 private:
     static const int base = 1000000000;
-    static const int base_digits = 9;
+    static const int baseDigits = 9;
 
     std::vector<int> mag;
     int sign;
@@ -76,6 +75,7 @@ private:
     static std::vector<int> convertBase(const std::vector<int> &a, int oldDigits, int newDigits);
     static std::vector<long long> karatsubaMultiply(const std::vector<long long> &a,
                                                     const std::vector<long long> &b);
+    static BigInt mulSimple(const BigInt &a, const BigInt &b);
     static BigInt parseBase(const std::string &val, int radix);
     static std::string toStringBase(BigInt val, int radix);
 };
